@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# system-time
+# Version 1.0
+# Calculate how many hours and minutes a given user has used the system in the current month. This program uses the user's id as the default user if none provided. Any login with more than 3 hours of use is excluded, hence the uplimit variable. This program also ignores any "still logged in" entries.
+totalhr=0; totalmin=0; uplimit=300
+userid=$USER; [ $1 ] && userid=$1
+month=`date | cut -c5-7`
+temp=`last $userid | grep -v sshd | grep $month | grep -v st | cut -c67-68,70-71`
+for var in $temp
+do
+	[ $var -gt $uplimit ] && continue
+	hr=`echo $var | cut -c2`
+	min=`echo $var | cut -c3-`
+	totalhr=`expr $totalhr + $hr`
+	totalmin=`expr $totalmin + $min`
+done
+
+totalhr=`expr $totalhr + $totalmin / 60`
+totalmin=`expr $totalmin % 60`
+
+h="hour"; [ $totalhr -gt 1 ] && h="hours"
+m="minute"; [ $totalmin -gt 1 ] && m="minutes"
+echo "$userid has been logged on for $totalhr $h and $totalmin $m."
